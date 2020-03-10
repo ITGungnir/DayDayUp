@@ -125,9 +125,164 @@ public void forEach(Consumer<? super E> action) {
     }
 }
 ```
+也就是说，在使用迭代器或forEach方法对ArrayList进行遍历的过程中，不能调用ArrayList本身的add、remove等可能导致其结构发生变化的方法，如果要做这些操作，可以使用迭代器中提供的相关方法。
+
+### 4、迭代器
+ArrayList中有两个方法可以获取到迭代器对象，分别是`iterator()`和`listIterator()`，这两个方法分别返回一个`Itr`和`ListItr`对象，其方法定义如下：
+```java
+public ListIterator<E> listIterator() {
+    return new ListItr(0);
+}
+
+public Iterator<E> iterator() {
+    return new Itr();
+}
+```
+梳理一下这几个类的关系：
+* iterator()方法返回Itr对象，Itr类是Iterator接口的实现类；
+* listIterator()方法返回ListItr对象，ListItr类是Itr类的子类，同时实现了ListIterator接口；
+* ListIterator接口是Iterator接口的子接口，前者可以双向遍历，而后者只能从前向后遍历。
+
+```java
+public interface Iterator<E> {
+    boolean hasNext();
+
+    E next();
+
+    default void remove() {
+        throw new UnsupportedOperationException("remove");
+    }
+
+    default void forEachRemaining(Consumer<? super E> action) {
+        Objects.requireNonNull(action);
+        while (hasNext())
+            action.accept(next());
+    }
+}
+
+public interface ListIterator<E> extends Iterator<E> {
+    boolean hasNext();
+
+    E next();
+
+    boolean hasPrevious();
+
+    E previous();
+
+    int nextIndex();
+
+    int previousIndex();
+
+    void remove();
+
+    void set(E e);
+
+    void add(E e);
+}
+```
+前面提到了modCount，这里以Itr类中`remove()`方法的代码为例解释为什么通过迭代器删除元素不会抛异常：
+```java
+private class Itr implements Iterator<E> {
+    int expectedModCount = modCount;
+
+    public void remove() {
+        if (lastRet < 0)
+            throw new IllegalStateException();
+        checkForComodification();
+        try {
+            ArrayList.this.remove(lastRet);
+            cursor = lastRet;
+            lastRet = -1;
+            expectedModCount = modCount;
+        } catch (IndexOutOfBoundsException ex) {
+            throw new ConcurrentModificationException();
+        }
+    }
+
+    final void checkForComodification() {
+        if (modCount != expectedModCount)
+            throw new ConcurrentModificationException();
+    }
+}
+```
+可以看到，这个方法只是手动为expectedModCount变量赋了值，使这次结构化修改变成了合理的修改而已。
+
+### 5、SubList
+ArrayList提供了一个`subList()`方法，用于获取整个列表中的一部分，返回一个`SubList`对象，但这个对象仍然引用着ArrayList对象本身，因此，对这个SubList进行的操作都将最终反应到ArrayList本身。
+```java
+public List<E> subList(int fromIndex, int toIndex) {
+    subListRangeCheck(fromIndex, toIndex, size);
+    return new SubList(this, 0, fromIndex, toIndex);
+}
+
+private class SubList extends AbstractList<E> implements RandomAccess {
+    private final AbstractList<E> parent;
+
+    SubList(AbstractList<E> parent, int offset, int fromIndex, int toIndex) {
+        this.parent = parent;
+        // ...
+    }
+
+    public void add(int index, E e) {
+        rangeCheckForAdd(index);
+        checkForComodification();
+        parent.add(parentOffset + index, e);
+        this.modCount = parent.modCount;
+        this.size++;
+    }
+}
+```
+可以看到，在创建SubList时传入了ArrayList本身`this`作为SubList对象的`parent`属性，而SubList类中提供的方法最终都调用了`parent.xxx()`方法，因此其修改会最终反应到ArrayList本身。
+
+### 6、序列化
+ArrayList中使用`transient`关键字来修改其存储元素的数组`elementData`，表示这个数组在ArrayList被序列化时不会参加序列化，这样做的原因是elementData中可能含有空元素，如果这个数组参与序列化，那么可能会对很多空元素进行序列化，这样做无论从时间、空间还是性能上都是不友好的。
+
+为了解决这个问题，ArrayList实现了`java.io.Serializable`接口并重写了其`writeObject()`、`readObject()`方法：
+```java
+private void writeObject(java.io.ObjectOutputStream s)
+    throws java.io.IOException{
+    // Write out element count, and any hidden stuff
+    int expectedModCount = modCount;
+    s.defaultWriteObject();
+    // Write out size as capacity for behavioural compatibility with clone()
+    s.writeInt(size);
+    // Write out all elements in the proper order.
+    for (int i=0; i<size; i++) {
+        s.writeObject(elementData[i]);
+    }
+    if (modCount != expectedModCount) {
+        throw new ConcurrentModificationException();
+    }
+}
+
+private void readObject(java.io.ObjectInputStream s)
+    throws java.io.IOException, ClassNotFoundException {
+    elementData = EMPTY_ELEMENTDATA;
+    // Read in size, and any hidden stuff
+    s.defaultReadObject();
+    // Read in capacity
+    s.readInt(); // ignored
+    if (size > 0) {
+        // be like clone(), allocate array based upon size not capacity
+        int capacity = calculateCapacity(elementData, size);
+        SharedSecrets.getJavaOISAccess().checkArray(s, Object[].class, capacity);
+        ensureCapacityInternal(size);
+        Object[] a = elementData;
+        // Read in all elements in the proper order.
+        for (int i=0; i<size; i++) {
+            a[i] = s.readObject();
+        }
+    }
+}
+```
+这两个方法是Serializable接口中提供的两个签名，任何实现了Serializable接口的对象，如果需要对其待序列化的属性进行特殊处理，则可以实现这两个方法。从上述代码可以看出，这两个方法实际上就是对elementData中有意义的元素进行了写入和读出操作，去掉无意义的元素，节省时间和空间。
 
 ### 总结
 * ArrayList是基于数组的线性存储结构，线程不同步，与之相似的Vector是线程同步的；
 * ArrayList的默认初始长度是10，这个值在默认创建ArrayList时不会体现，会在添加第一个元素时体现；可以通过调用不同的构造方法来修改这个值；
 * 向ArrayList中添加元素时，如果需要扩容，则每次扩容为原来的1.5倍，但如果仍小于目标长度，则直接使用目标长度作为扩容后的长度；
 * ArrayList中数据的长度最大不能超过Integer.MAX_VALUE，否则会造成OOM错误；
+* ArrayList在每次进行结构化修改时都会将modCount递增，在迭代器和forEach()方法遍历列表时会校验此标识，如果在遍历过程中使用ArrayList内置的API修改了列表结构，则会抛出ConcurrentModificationException异常，要解决这个问题，可以考虑使用迭代器自身的相关方法进行结构化的修改；
+* ArrayList提供了iterator()和listIterator()方法获取迭代器，前者只能正向遍历，后者可以正向反响遍历；
+* 通过subList()方法创建的子列表SubList，其上的修改都会最终反应到ArrayList对象本身；
+* ArrayList通过Serializable接口提供的writeObject()和readObject()签名对元素进行序列化，目的是避免elementData中的空元素造成时间和空间上的浪费。

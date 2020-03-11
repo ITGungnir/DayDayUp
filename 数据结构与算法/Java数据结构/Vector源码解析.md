@@ -1,4 +1,4 @@
-## Java中的数据结构-Vector源码解析
+## Java数据结构-Vector源码解析
 
 ### 1、Vector是线程安全的
 **Vector与ArrayList大致相似，不同点是Vector是线程安全的而ArrayList不是**

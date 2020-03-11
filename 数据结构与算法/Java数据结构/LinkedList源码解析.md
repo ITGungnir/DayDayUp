@@ -1,4 +1,4 @@
-## Java中的数据结构-LinkedList源码解析
+## Java数据结构-LinkedList源码解析
 
 > &emsp;&emsp;`LinkedList`是一种双向链表的数据结构，具有`List`和`Deque`接口的所有特性。<br/>
 > &emsp;&emsp;**此类是线程不安全的。**<br/>

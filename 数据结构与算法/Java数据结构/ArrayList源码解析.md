@@ -1,4 +1,4 @@
-## Java中的数据结构-ArrayList源码解析
+## Java数据结构-ArrayList源码解析
 
 > &emsp;&emsp;`ArrayList`是Java集合框架中的一员，是`List`接口的一种变长数组的实现。ArrayList中实现了线性表的所有操作，且允许存放一切数据，包括`null`。除了实现List接口之外，此类还提供一些方法来操纵内部用于存储列表的数组的大小。ArrayList类与`Vector`类大致相似，区别只是ArrayList是线程不同步的，而Vector是线程同步的。<br/>
 > &emsp;&emsp;`size()`、`isEmpty()`、`get()`、`set()`、`iterator()`、`listIterator()`等方法具有常量级的运行时间，而`add()`方法具有`摊销固定时间(amortized constant time)`，即向ArrayList中添加n个元素`平均`需要`O(n)`的时间复杂度，其他操作所需的时间都是线性的（大致而言）。相比于`LinkedList`的实现，ArrayList中的常量因子相对较小。<br/>

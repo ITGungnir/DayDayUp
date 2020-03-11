@@ -5,11 +5,12 @@
   * [双向循环链表](./数据结构与算法/链表/双向循环链表.md)
 * **栈**
   * [中缀表达式求值](./数据结构与算法/栈/中缀表达式求值.md)
-* [**Java中的数据结构**](./数据结构与算法/Java中的数据结构/概述.md)
-  * [ArrayList源码解析](./数据结构与算法/Java中的数据结构/ArrayList源码解析.md)
-  * [Vector源码解析](./数据结构与算法/Java中的数据结构/Vector源码解析.md)
-  * [LinkedList源码解析](./数据结构与算法/Java中的数据结构/LinkedList源码解析.md)
-  * [HashMap源码解析](./数据结构与算法/Java中的数据结构/HashMap源码解析.md)
+* **Java数据结构**
+  * [概述](./数据结构与算法/Java数据结构/概述.md)
+  * [ArrayList源码解析](./数据结构与算法/Java数据结构/ArrayList源码解析.md)
+  * [Vector源码解析](./数据结构与算法/Java数据结构/Vector源码解析.md)
+  * [LinkedList源码解析](./数据结构与算法/Java数据结构/LinkedList源码解析.md)
+  * [HashMap源码解析](./数据结构与算法/Java数据结构/HashMap源码解析.md)
 * **递归**
   * [链表倒置](./数据结构与算法/递归/链表倒置.md)
   * [汉诺塔](./数据结构与算法/递归/汉诺塔.md)

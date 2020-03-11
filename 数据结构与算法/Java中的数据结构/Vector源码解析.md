@@ -70,3 +70,22 @@ private void writeObject(java.io.ObjectOutputStream s)
     s.writeFields();
 }
 ```
+
+### 4、Stack
+`Stack`也是一种常用的数据结构——`栈`：
+```java
+public class Stack<E> extends Vector<E> {}
+```
+从类定义来看，Stack类是继承自Vector类的，说明Stack类具有Vector类的全部特性，最重要的是，与Vector相同，Stack也是线程安全的。
+
+Stack作为一个`栈`数据结构，具有栈结构的相关方法，如压栈、弹栈等。为了保证Stack线程安全的特性，这些新增的方法上也添加了必要的`synchronized`关键字。
+```java
+// 压栈
+public E push(E item) {}
+
+// 弹栈
+public synchronized E pop() {}
+
+// 返回栈顶元素
+public synchronized E peek() {}
+```

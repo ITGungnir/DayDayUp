@@ -302,7 +302,7 @@ static class SynchronizedCollection<E> implements Collection<E>, Serializable {
 
 这里有一个细节，synchronizedList()方法传入的参数是List类型的，也就是说这个方法不仅适用于ArrayList，而是适用于一切List的子类。此外，Collections类还提供了诸如`synchronizedSet()`、`synchronizedMap()`等方法，用来处理Set、Map等数据结构。
 
-### 总结
+### **总结**
 * ArrayList是基于数组的线性存储结构，线程不同步，与之相似的Vector是线程同步的；
 * ArrayList的默认初始长度是10，这个值在默认创建ArrayList时不会体现，会在添加第一个元素时体现；可以通过调用不同的构造方法来修改这个值；
 * 向ArrayList中添加元素时，如果需要扩容，则每次扩容为原来的1.5倍，但如果仍小于目标长度，则直接使用目标长度作为扩容后的长度；

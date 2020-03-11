@@ -277,6 +277,31 @@ private void readObject(java.io.ObjectInputStream s)
 ```
 这两个方法是Serializable接口中提供的两个签名，任何实现了Serializable接口的对象，如果需要对其待序列化的属性进行特殊处理，则可以实现这两个方法。从上述代码可以看出，这两个方法实际上就是对elementData中有意义的元素进行了写入和读出操作，去掉无意义的元素，节省时间和空间。
 
+### 7、Collections.synchronizedList
+前面提到过，让ArrayList线程安全的一种方法是使用`List<String> list = Collections.synchronizedList(new ArrayList<String>());`的方法，接下来看一下其中的原理：
+```java
+// Collections # synchronizedList()
+public static <T> List<T> synchronizedList(List<T> list) {
+    return (list instanceof RandomAccess ?
+            new SynchronizedRandomAccessList<>(list) :
+            new SynchronizedList<>(list));
+}
+```
+`SynchronizedRandomAccessList`、`SynchronizedList`类共同的父类是`SynchronizedCollection`：
+```java
+static class SynchronizedCollection<E> implements Collection<E>, Serializable {
+    final Object mutex;     // Object on which to synchronize
+
+    public boolean add(E e) {
+        synchronized (mutex) {return c.add(e);}
+    }
+    // ...
+}
+```
+可以发现，实际上就是在非线程安全的类的操作外层套了一层`synchronized`关键字而已。
+
+这里有一个细节，synchronizedList()方法传入的参数是List类型的，也就是说这个方法不仅适用于ArrayList，而是适用于一切List的子类。此外，Collections类还提供了诸如`synchronizedSet()`、`synchronizedMap()`等方法，用来处理Set、Map等数据结构。
+
 ### 总结
 * ArrayList是基于数组的线性存储结构，线程不同步，与之相似的Vector是线程同步的；
 * ArrayList的默认初始长度是10，这个值在默认创建ArrayList时不会体现，会在添加第一个元素时体现；可以通过调用不同的构造方法来修改这个值；
@@ -285,4 +310,5 @@ private void readObject(java.io.ObjectInputStream s)
 * ArrayList在每次进行结构化修改时都会将modCount递增，在迭代器和forEach()方法遍历列表时会校验此标识，如果在遍历过程中使用ArrayList内置的API修改了列表结构，则会抛出ConcurrentModificationException异常，要解决这个问题，可以考虑使用迭代器自身的相关方法进行结构化的修改；
 * ArrayList提供了iterator()和listIterator()方法获取迭代器，前者只能正向遍历，后者可以正向反响遍历；
 * 通过subList()方法创建的子列表SubList，其上的修改都会最终反应到ArrayList对象本身；
-* ArrayList通过Serializable接口提供的writeObject()和readObject()签名对元素进行序列化，目的是避免elementData中的空元素造成时间和空间上的浪费。
+* ArrayList通过Serializable接口提供的writeObject()和readObject()签名对元素进行序列化，目的是避免elementData中的空元素造成时间和空间上的浪费；
+* 让ArrayList支持线程安全的一种方法是使用Collections.synchronizedList()方法。
